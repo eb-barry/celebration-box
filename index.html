@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#16110d" />
+    <title>慶祝</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Serif+TC:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --cream: #f4efe6;
+        --dim: rgba(244, 239, 230, 0.72);
+        --ink: #16110d;
+        --line: rgba(244, 239, 230, 0.16);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--ink);
+        color: var(--cream);
+        font-family: "Cormorant Garamond", "Noto Serif TC", "Songti TC", Palatino, serif;
+      }
+
+      main {
+        width: min(32rem, calc(100% - 2.4rem));
+        margin: 0 auto;
+        padding: 2.4rem 0 3rem;
+      }
+
+      .eyebrow {
+        margin: 0;
+        letter-spacing: 0.28em;
+        font-size: 0.82rem;
+      }
+
+      h1 {
+        margin: 0.4rem 0 1.4rem;
+        font-size: 2.4rem;
+        font-weight: 600;
+      }
+
+      .scene {
+        display: grid;
+        grid-template-columns: 7.5rem 1fr;
+        gap: 1rem;
+        align-items: center;
+        padding: 0.7rem;
+        border: 1px solid var(--line);
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .scene img {
+        width: 7.5rem;
+        height: 10.5rem;
+        object-fit: cover;
+        object-position: center 42%;
+      }
+
+      .scene strong,
+      .scene em {
+        display: block;
+      }
+
+      .scene strong {
+        font-size: 1.7rem;
+        font-weight: 600;
+        font-style: normal;
+      }
+
+      .scene em {
+        margin-top: 0.35rem;
+        color: var(--dim);
+        font-size: 1.05rem;
+        line-height: 1.4;
+      }
+
+      .notes {
+        margin-top: 1.8rem;
+        color: var(--dim);
+        font-size: 1.05rem;
+        line-height: 1.55;
+      }
+
+      .notes p { margin: 0.55rem 0; }
+
+      code {
+        font-family: ui-monospace, monospace;
+        font-size: 0.82em;
+        color: var(--cream);
+      }
+
+      a.plain {
+        color: var(--cream);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">慶祝</p>
+      <h1>今晚的盒子</h1>
+      <a class="scene" href="birthday/">
+        <img src="birthday%20cake.jpg" alt="" />
+        <span>
+          <strong>生日</strong>
+          <em>一首歌，一根蠟燭。吹到第三下，火焰才熄滅。</em>
+        </span>
+      </a>
+      <section class="notes">
+        <p>給壽星的連結請直接打開生日這一頁。點一下才會開始唱歌，手機會同時詢問麥克風。</p>
+        <p>想在蠟燭熄滅後寫上名字：<br /><code>birthday/?name=她的名字</code></p>
+        <p>想先彩排吹氣，從接近結尾開始：<br /><code>birthday/?from=170</code></p>
+        <p>麥克風不方便時，改成輕點燭火：<br /><code>birthday/?mic=off</code></p>
+        <p>
+          線上頁面：
+          <a class="plain" href="https://eb-barry.github.io/celebration-box/birthday/">eb-barry.github.io/celebration-box/birthday/</a>
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
