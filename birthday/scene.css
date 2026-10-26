@@ -82,10 +82,17 @@ button {
   position: absolute;
   left: 0;
   bottom: 0;
-  width: calc(var(--s) * 42px);
-  height: calc(var(--s) * 92px);
+  width: calc(var(--s) * 34px);
+  height: calc(var(--s) * 72px);
   transform: translateX(-50%) scale(var(--flame-scale));
   transform-origin: 50% 100%;
+}
+
+.flame-sway {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  animation: drift 1.45s ease-in-out infinite;
 }
 
 .flame-anchor.weak {
@@ -299,10 +306,17 @@ button {
   color: #ffe7a8;
 }
 
+@keyframes drift {
+  0% { transform: rotate(-14deg); }
+  38% { transform: rotate(9deg); }
+  72% { transform: rotate(15deg); }
+  100% { transform: rotate(-14deg); }
+}
+
 @keyframes sway {
   0%,
-  100% { transform: translateX(-50%) scale(1, 1) rotate(-2deg); }
-  50% { transform: translateX(-50%) scale(0.9, 1.08) rotate(2.5deg); }
+  100% { transform: translateX(-50%) scale(1, 1) rotate(-6deg); }
+  50% { transform: translateX(-50%) scale(0.88, 1.08) rotate(7deg); }
 }
 
 @keyframes glow {
@@ -314,9 +328,9 @@ button {
 @keyframes gust {
   0% { transform: translateX(-50%) scale(var(--flame-scale)); }
   40% {
-    transform: translateX(calc(-50% + var(--s) * 18px))
-      scale(calc(var(--flame-scale) * 0.35), calc(var(--flame-scale) * 1.2))
-      rotate(22deg);
+    transform: translateX(calc(-50% + var(--s) * 26px))
+      scale(calc(var(--flame-scale) * 0.35), calc(var(--flame-scale) * 1.15))
+      rotate(28deg);
   }
   100% { transform: translateX(-50%) scale(var(--flame-scale)); }
 }
@@ -356,6 +370,7 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .flame-sway,
   .outer,
   .mid,
   .glow,
