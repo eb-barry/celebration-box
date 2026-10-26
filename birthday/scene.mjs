@@ -1,8 +1,8 @@
 import { createBlowMeter } from "./blow-meter.mjs";
 
 const IMAGE = { w: 768, h: 1376 };
-// Wick of the spiral candle in birthday cake.jpg.
-const FLAME = { x: 387, y: 516 };
+// Tip of the spiral candle. The photo's own flame is already painted out.
+const FLAME = { x: 385, y: 518 };
 
 const VERSES = [
   ["The office doors are quiet now,", "Your day is done, your smile stays bright;"],
@@ -94,18 +94,6 @@ function placeFlame() {
   flameHit.style.top = `${y}px`;
   flameHit.style.width = `${scale * 110}px`;
   flameHit.style.height = `${scale * 150}px`;
-}
-
-function showUnlitPhoto() {
-  if (photo.dataset.unlit === "1") return;
-  photo.dataset.unlit = "1";
-  photo.src = "cake-out.jpg";
-}
-
-function showLitPhoto() {
-  if (photo.dataset.unlit !== "1") return;
-  photo.dataset.unlit = "0";
-  photo.src = "../birthday%20cake.jpg";
 }
 
 function vibrate(pattern) {
@@ -231,7 +219,6 @@ function finish() {
   flame.classList.remove("gust");
   flame.classList.add("out");
   stage.classList.add("is-out");
-  showUnlitPhoto();
   vibrate([18, 40, 28, 40, 80]);
   setCaption("", "");
   window.clearTimeout(closeTimer);
@@ -252,7 +239,6 @@ function registerBlow() {
     return;
   }
   if (blows === 2) {
-    showUnlitPhoto();
     flame.classList.add("weak", "gust");
     window.setTimeout(() => flame.classList.remove("gust"), 1100);
     return;
@@ -305,7 +291,6 @@ function relight() {
   flame.classList.remove("out", "weak", "gust");
   stage.classList.remove("is-out");
   jumpTo = 0;
-  showLitPhoto();
   stopMic();
   audio.currentTime = 0;
   audio.play().catch(() => {
