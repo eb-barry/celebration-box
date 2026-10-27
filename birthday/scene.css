@@ -103,7 +103,9 @@ button {
   inset: 0;
   transform-origin: 50% 100%;
   animation: drift 5.8s linear infinite;
-  will-change: transform;
+  filter:
+    drop-shadow(0 0 6px rgba(255, 186, 80, 0.55))
+    drop-shadow(0 0 16px rgba(255, 120, 30, 0.28));
 }
 
 .flame-anchor.weak {
@@ -126,7 +128,6 @@ button {
   visibility: hidden;
 }
 
-.glow,
 .outer,
 .mid,
 .core,
@@ -135,15 +136,6 @@ button {
   position: absolute;
   left: 50%;
   pointer-events: none;
-}
-
-.glow {
-  bottom: -10%;
-  width: 260%;
-  height: 220%;
-  transform: translateX(-50%);
-  background: radial-gradient(circle at 50% 70%, rgba(255, 176, 74, 0.55), rgba(255, 120, 30, 0.12) 42%, transparent 70%);
-  animation: glow 2.8s linear infinite;
 }
 
 .outer,
@@ -158,23 +150,21 @@ button {
 .outer {
   width: 72%;
   height: 100%;
-  background: radial-gradient(ellipse at 50% 72%, #ffd48a 0%, #ff7a1c 48%, rgba(180, 40, 0, 0) 74%);
-  filter: blur(0.6px);
+  background: radial-gradient(ellipse at 50% 78%, #fff1c4 0%, #ffb14a 34%, #ff6a12 58%, rgba(255, 90, 16, 0) 78%);
   animation: flicker 2.1s linear infinite;
 }
 
 .mid {
   width: 46%;
   height: 76%;
-  background: radial-gradient(ellipse at 50% 74%, #fff3c9 0%, #ffb03a 52%, rgba(255, 140, 20, 0) 76%);
+  background: radial-gradient(ellipse at 50% 78%, #fff7dc 0%, #ffc56a 46%, rgba(255, 176, 48, 0) 74%);
   animation: flicker-b 3.4s linear infinite;
 }
 
 .core {
   width: 20%;
   height: 42%;
-  background: #fffaf0;
-  filter: blur(0.4px);
+  background: radial-gradient(ellipse at 50% 70%, #fffaf0 0%, rgba(255, 244, 220, 0) 72%);
 }
 
 .spark {
@@ -241,7 +231,6 @@ button {
 .flame-anchor.smoking .smoke i:nth-child(4) { animation-delay: 1.05s; }
 .flame-anchor.smoking .smoke i:nth-child(5) { animation-delay: 1.4s; margin-left: calc(var(--s) * -8px); }
 
-.flame-anchor.out .glow,
 .flame-anchor.out .outer,
 .flame-anchor.out .mid,
 .flame-anchor.out .core {
@@ -378,16 +367,6 @@ button {
   89% { transform: translateX(-50%) rotate(3deg) scale(1.04, 0.9); }
 }
 
-@keyframes glow {
-  0%,
-  100% { opacity: 0.7; }
-  18% { opacity: 1; }
-  27% { opacity: 0.62; }
-  46% { opacity: 0.92; }
-  63% { opacity: 0.55; }
-  81% { opacity: 0.96; }
-}
-
 @keyframes gust {
   0% { transform: translateX(-50%) scale(var(--flame-scale)); }
   40% {
@@ -440,7 +419,6 @@ button {
 
   .outer,
   .mid,
-  .glow,
   .spark,
   .caption.is-in .primary,
   .caption.is-in .secondary {
