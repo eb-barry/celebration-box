@@ -26,6 +26,21 @@ const primary = document.querySelector("#primary");
 const secondary = document.querySelector("#secondary");
 const debugEl = document.querySelector("#debug");
 const audio = document.querySelector("#song");
+const SONG_GAIN = 1.5;
+let songCtx = null;
+
+function armSong() {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return;
+  if (!songCtx) {
+    const ctx = new Ctx();
+    const gain = ctx.createGain();
+    gain.gain.value = SONG_GAIN;
+    ctx.createMediaElementSource(audio).connect(gain).connect(ctx.destination);
+    songCtx = ctx;
+  }
+  songCtx.resume();
+}
 
 const meter = createBlowMeter();
 let phase = "idle";
@@ -246,6 +261,7 @@ function begin() {
   setCaption("", "");
   jumpTo = Number.isFinite(rehearseFrom) && rehearseFrom > 0 ? rehearseFrom : 0;
   applySeek();
+  armSong();
   audio.play().then(applySeek).catch(() => {
     phase = "idle";
     startBtn.hidden = false;
@@ -270,6 +286,7 @@ function relight() {
   jumpTo = 0;
   stopMic();
   audio.currentTime = 0;
+  armSong();
   audio.play().catch(() => {
     setCaption("請再點一下", "聲音還沒有開始");
   });
@@ -281,6 +298,7 @@ function relight() {
 startBtn.addEventListener("click", () => {
   if (phase === "idle") begin();
   else if (phase === "playing" && audio.paused) {
+    armSong();
     audio.play().catch(() => {});
     startBtn.hidden = true;
     keepAwake();
@@ -304,6 +322,7 @@ document.addEventListener("visibilitychange", () => {
   if (phase === "playing") {
     keepAwake();
     if (audio.paused) {
+      armSong();
       audio.play().catch(() => {
         startBtn.hidden = false;
         setCaption("點一下繼續", "");
