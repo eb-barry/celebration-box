@@ -137,7 +137,7 @@ button {
 }
 
 .flame-anchor.out .flame-body {
-  opacity: 0;
+  animation: snuff 0.32s ease-in forwards;
 }
 
 .flame-anchor.cold .flame-lean {
@@ -381,6 +381,11 @@ button {
   61% { transform: translateX(-50%) rotate(-2deg) scale(1.02, 0.78); }
   76% { transform: translateX(-50%) rotate(-6deg) scale(0.88, 1.18); }
   89% { transform: translateX(-50%) rotate(3deg) scale(1.04, 0.9); }
+}
+
+@keyframes snuff {
+  0% { transform: translateX(-50%) scale(var(--flame-scale)); opacity: 1; }
+  100% { transform: translateX(-50%) scale(0.16, 0.04); opacity: 0; }
 }
 
 @keyframes spark {

@@ -55,7 +55,7 @@ export function createBlowMeter() {
 
     if (!overSince) overSince = now;
     if (now - overSince < 180) return null;
-    if (now - lastTrigger < 900) return null;
+    if (now - lastTrigger < 400) return null;
 
     lastTrigger = now;
     overSince = 0;

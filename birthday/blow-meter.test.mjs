@@ -33,6 +33,32 @@ test("one breath counts once until the air falls away", () => {
   assert.ok(second);
 });
 
+test("three separate breaths each count", () => {
+  const meter = createBlowMeter();
+  meter.arm(0);
+  quiet(meter, 0, 400);
+
+  const hits = [];
+  function puff(start) {
+    for (let now = start; now <= start + 400; now += 50) {
+      const hit = meter.push({ rms: 0.4, low: 0.55, now });
+      if (hit) hits.push(hit.at);
+    }
+  }
+  function settle(start) {
+    for (let now = start; now <= start + 250; now += 50) {
+      meter.push({ rms: 0.02, low: 0.05, now });
+    }
+  }
+
+  puff(500);
+  settle(950);
+  puff(1250);
+  settle(1700);
+  puff(2000);
+  assert.equal(hits.length, 3);
+});
+
 test("a slow rise, like talking, does not count", () => {
   const meter = createBlowMeter();
   meter.arm(0);

@@ -3,7 +3,7 @@ import { createBlowMeter } from "./blow-meter.mjs";
 const IMAGE = { w: 768, h: 1376 };
 const SMOKE_MS = 5000;
 const BOW_MS = 1000;
-const SNUFF_MS = 200;
+const SNUFF_MS = 340;
 
 const params = new URLSearchParams(location.search);
 const rehearseFrom = Number(params.get("from"));
@@ -28,7 +28,7 @@ const primary = document.querySelector("#primary");
 const secondary = document.querySelector("#secondary");
 const debugEl = document.querySelector("#debug");
 const audio = document.querySelector("#song");
-const SONG_GAIN = 1.5;
+const SONG_GAIN = 3.5;
 let songCtx = null;
 
 function armSong() {
@@ -229,6 +229,7 @@ function finish() {
   stopMic();
   flameHit.hidden = true;
   window.clearTimeout(bowTimer);
+  flame.classList.remove("bow");
   flame.classList.add("out");
   stage.classList.add("is-out");
   vibrate([18, 40, 28, 40, 80]);
