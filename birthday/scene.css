@@ -102,7 +102,7 @@ button {
   position: absolute;
   inset: 0;
   transform-origin: 50% 100%;
-  animation: drift 1.25s ease-in-out infinite;
+  animation: drift 5.8s linear infinite;
   will-change: transform;
 }
 
@@ -143,7 +143,7 @@ button {
   height: 220%;
   transform: translateX(-50%);
   background: radial-gradient(circle at 50% 70%, rgba(255, 176, 74, 0.55), rgba(255, 120, 30, 0.12) 42%, transparent 70%);
-  animation: glow 1.15s ease-in-out infinite;
+  animation: glow 2.8s linear infinite;
 }
 
 .outer,
@@ -160,14 +160,14 @@ button {
   height: 100%;
   background: radial-gradient(ellipse at 50% 72%, #ffd48a 0%, #ff7a1c 48%, rgba(180, 40, 0, 0) 74%);
   filter: blur(0.6px);
-  animation: sway 0.85s ease-in-out infinite;
+  animation: flicker 2.1s linear infinite;
 }
 
 .mid {
   width: 46%;
   height: 76%;
   background: radial-gradient(ellipse at 50% 74%, #fff3c9 0%, #ffb03a 52%, rgba(255, 140, 20, 0) 76%);
-  animation: sway 0.62s ease-in-out infinite reverse;
+  animation: flicker-b 3.4s linear infinite;
 }
 
 .core {
@@ -337,20 +337,55 @@ button {
 
 @keyframes drift {
   0%,
-  100% { transform: translateX(calc(var(--s) * -8px)) rotate(-26deg); }
-  50% { transform: translateX(calc(var(--s) * 10px)) rotate(24deg); }
+  100% { transform: translateX(calc(var(--s) * -2px)) rotate(-3deg) scale(0.98, 1.04); }
+  6% { transform: translateX(calc(var(--s) * 2px)) rotate(5deg) scale(1.04, 0.86); }
+  11% { transform: translateX(calc(var(--s) * 1px)) rotate(1deg) scale(0.94, 1.18); }
+  18% { transform: translateX(calc(var(--s) * -7px)) rotate(-16deg) scale(0.9, 1.06); }
+  24% { transform: translateX(calc(var(--s) * -3px)) rotate(-6deg) scale(1.05, 0.82); }
+  31% { transform: translateX(calc(var(--s) * 1px)) rotate(2deg) scale(0.96, 1.22); }
+  37% { transform: translateX(calc(var(--s) * 4px)) rotate(8deg) scale(1.02, 0.94); }
+  44% { transform: translateX(calc(var(--s) * 9px)) rotate(18deg) scale(0.88, 1.08); }
+  52% { transform: translateX(calc(var(--s) * 3px)) rotate(7deg) scale(1.06, 0.78); }
+  58% { transform: translateX(calc(var(--s) * -1px)) rotate(-2deg) scale(0.95, 1.16); }
+  66% { transform: translateX(calc(var(--s) * -8px)) rotate(-19deg) scale(0.92, 0.9); }
+  73% { transform: translateX(calc(var(--s) * -2px)) rotate(-4deg) scale(1, 1.2); }
+  81% { transform: translateX(calc(var(--s) * 6px)) rotate(13deg) scale(0.97, 0.84); }
+  88% { transform: translateX(calc(var(--s) * 2px)) rotate(3deg) scale(0.93, 1.12); }
+  94% { transform: translateX(calc(var(--s) * -5px)) rotate(-11deg) scale(1.03, 0.96); }
 }
 
-@keyframes sway {
+@keyframes flicker {
   0%,
-  100% { transform: translateX(-50%) scale(1, 1) rotate(-6deg); }
-  50% { transform: translateX(-50%) scale(0.88, 1.08) rotate(7deg); }
+  100% { transform: translateX(-50%) rotate(-2deg) scale(1, 1); }
+  9% { transform: translateX(-50%) rotate(4deg) scale(0.92, 1.14); }
+  17% { transform: translateX(-50%) rotate(-1deg) scale(1.06, 0.84); }
+  28% { transform: translateX(-50%) rotate(-7deg) scale(0.9, 1.08); }
+  41% { transform: translateX(-50%) rotate(2deg) scale(1.04, 0.9); }
+  53% { transform: translateX(-50%) rotate(6deg) scale(0.88, 1.16); }
+  67% { transform: translateX(-50%) rotate(-3deg) scale(1.02, 0.8); }
+  79% { transform: translateX(-50%) rotate(1deg) scale(0.96, 1.1); }
+  91% { transform: translateX(-50%) rotate(-5deg) scale(1.05, 0.92); }
+}
+
+@keyframes flicker-b {
+  0%,
+  100% { transform: translateX(-50%) rotate(2deg) scale(1, 0.94); }
+  13% { transform: translateX(-50%) rotate(-5deg) scale(0.9, 1.12); }
+  27% { transform: translateX(-50%) rotate(1deg) scale(1.08, 0.82); }
+  44% { transform: translateX(-50%) rotate(6deg) scale(0.94, 1.06); }
+  61% { transform: translateX(-50%) rotate(-2deg) scale(1.02, 0.78); }
+  76% { transform: translateX(-50%) rotate(-6deg) scale(0.88, 1.18); }
+  89% { transform: translateX(-50%) rotate(3deg) scale(1.04, 0.9); }
 }
 
 @keyframes glow {
   0%,
-  100% { opacity: 0.72; }
-  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+  18% { opacity: 1; }
+  27% { opacity: 0.62; }
+  46% { opacity: 0.92; }
+  63% { opacity: 0.55; }
+  81% { opacity: 0.96; }
 }
 
 @keyframes gust {
@@ -430,6 +465,8 @@ button {
 
 @keyframes drift-soft {
   0%,
-  100% { transform: rotate(-5deg); }
-  50% { transform: rotate(5deg); }
+  100% { transform: rotate(-3deg) scale(1, 1); }
+  23% { transform: rotate(4deg) scale(1, 0.94); }
+  47% { transform: rotate(-1deg) scale(1, 1.06); }
+  71% { transform: rotate(2deg) scale(1, 0.9); }
 }
