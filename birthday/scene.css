@@ -80,12 +80,15 @@ button {
   height: 0;
   --lean: 0;
   --flame-scale: 1;
+  perspective: calc(var(--s) * 160px);
+  perspective-origin: 50% 100%;
   pointer-events: none;
 }
 
 .flame-lean {
   transform: translateX(calc(var(--lean) * var(--s) * 14px)) rotate(calc(var(--lean) * 8deg));
   transform-origin: bottom center;
+  transform-style: preserve-3d;
 }
 
 .flame-body {
@@ -96,6 +99,7 @@ button {
   height: calc(var(--s) * 84px);
   transform: translateX(-50%) scale(var(--flame-scale));
   transform-origin: 50% 100%;
+  transform-style: preserve-3d;
   transition: transform 0.05s steps(1, end), opacity 0.18s linear;
 }
 
@@ -114,7 +118,7 @@ button {
 }
 
 .flame-anchor.bow .flame-body {
-  transform: translateX(-50%) scale(calc(var(--flame-scale) * 0.95), calc(var(--flame-scale) * -0.84));
+  transform: translateX(-50%) rotateX(42deg) scale(calc(var(--flame-scale) * 0.96), calc(var(--flame-scale) * 0.68));
 }
 
 .flame-anchor.bow .flame-sway,
@@ -122,6 +126,10 @@ button {
 .flame-anchor.bow .mid,
 .flame-anchor.bow .core {
   animation: none;
+}
+
+.flame-anchor.bow .flame-sway {
+  filter: drop-shadow(0 0 5px rgba(255, 170, 60, 0.4));
 }
 
 .flame-anchor.out .flame-sway {
