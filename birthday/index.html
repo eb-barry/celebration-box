@@ -22,35 +22,39 @@
   </head>
   <body>
     <main class="stage">
-      <img
-        id="photo"
-        class="photo"
-        src="cake-out.jpg"
-        alt="桌上的生日蛋糕，中間有一根蠟燭"
-      />
-      <div class="veil"></div>
-      <div id="flame" class="flame-anchor" aria-hidden="true">
-        <div class="flame-lean">
-          <div class="flame-body">
-            <div class="flame-sway">
-              <i class="glow"></i>
-              <i class="outer"></i>
-              <i class="mid"></i>
-              <i class="core"></i>
-              <i class="spark s1"></i>
-              <i class="spark s2"></i>
-              <i class="spark s3"></i>
+      <div id="sheet" class="sheet">
+        <img
+          id="photo"
+          class="photo"
+          src="cake-out.jpg"
+          alt="桌上的生日蛋糕，中間有一根蠟燭"
+        />
+        <div class="veil"></div>
+        <div id="flame" class="flame-anchor" aria-hidden="true">
+          <div class="flame-lean">
+            <div class="flame-body">
+              <div class="flame-sway">
+                <i class="glow"></i>
+                <i class="outer"></i>
+                <i class="mid"></i>
+                <i class="core"></i>
+                <i class="spark s1"></i>
+                <i class="spark s2"></i>
+                <i class="spark s3"></i>
+              </div>
             </div>
           </div>
+          <div class="smoke" aria-hidden="true">
+            <b class="plume"></b>
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+          </div>
         </div>
-        <div class="smoke" aria-hidden="true">
-          <i></i>
-          <i></i>
-          <i></i>
-        </div>
-        <i class="ember"></i>
+        <button id="flame-hit" class="flame-hit" type="button" aria-label="輕點燭火" hidden></button>
       </div>
-      <button id="flame-hit" class="flame-hit" type="button" aria-label="輕點燭火" hidden></button>
       <div class="caption">
         <p id="primary" class="primary"></p>
         <p id="secondary" class="secondary"></p>

@@ -1,26 +1,9 @@
 import { createBlowMeter } from "./blow-meter.mjs";
 
 const IMAGE = { w: 768, h: 1376 };
-// Tip of the spiral candle. The photo's own flame is already painted out.
-const FLAME = { x: 385, y: 518 };
-
-const VERSES = [
-  ["The office doors are quiet now,", "Your day is done, your smile stays bright;"],
-  ["A little cake, a ribboned wish,", "And friends have gathered close tonight."],
-  ["Happy birthday, lovely you,", "May every kind dream find its way;"],
-  ["You make the room feel warm and new,", "Tonight the world is yours to celebrate."],
-  ["生日快樂，親愛的你，", "願每個心願都如期；"],
-  ["願溫柔的風陪著你，", "把幸福寫進新一歲裡。"],
-  ["Joyeux anniversaire, belle amie,", "Que tes beaux rêves prennent leur essor;"],
-  ["Que la joie te suive aujourd’hui,", "Et que ton cœur s’épanouisse encore."],
-  ["Feliz cumpleaños, luz de la noche,", "Que la vida te regale ilusión;"],
-  ["Buon compleanno, dolce sorriso,", "Che la felicità viva nel tuo cuore."],
-  ["Happy birthday, lovely you,", "生日快樂，願你歡喜；"],
-  ["Buon compleanno, dear one tonight,", "May love make every moment bright."],
-];
+const SMOKE_MS = 5000;
 
 const params = new URLSearchParams(location.search);
-const guestName = (params.get("name") || "").trim();
 const rehearseFrom = Number(params.get("from"));
 const micOff = params.get("mic") === "off";
 const debug = params.get("debug") === "1";
@@ -33,6 +16,7 @@ function applySeek() {
 }
 
 const stage = document.querySelector(".stage");
+const sheet = document.querySelector("#sheet");
 const photo = document.querySelector("#photo");
 const flame = document.querySelector("#flame");
 const startBtn = document.querySelector("#start");
@@ -52,9 +36,10 @@ let audioCtx = null;
 let analyser = null;
 let raf = 0;
 let wakeLock = null;
-let verseAt = -1;
 let captionKey = "";
 let closeTimer = 0;
+let smokeTimer = 0;
+let coldTimer = 0;
 
 const timeBuf = new Uint8Array(2048);
 const freqBuf = new Uint8Array(1024);
@@ -67,33 +52,19 @@ function setCaption(main, sub) {
   secondary.textContent = sub;
   secondary.hidden = !sub;
   const caption = document.querySelector(".caption");
+  caption.hidden = !main && !sub;
   caption.classList.remove("is-in");
   void caption.offsetWidth;
   caption.classList.add("is-in");
 }
 
-function verseIndex(time) {
-  const start = 8;
-  const end = 172;
-  if (time < start) return -1;
-  const span = (end - start) / VERSES.length;
-  return Math.min(VERSES.length - 1, Math.floor((time - start) / span));
-}
-
-function placeFlame() {
+function placeSheet() {
   const rect = stage.getBoundingClientRect();
+  if (rect.width < 2 || rect.height < 2) return;
   const scale = Math.max(rect.width / IMAGE.w, rect.height / IMAGE.h);
-  const ox = (rect.width - IMAGE.w * scale) / 2;
-  const oy = (rect.height - IMAGE.h * scale) / 2;
-  const x = ox + FLAME.x * scale;
-  const y = oy + FLAME.y * scale;
-  flame.style.left = `${x}px`;
-  flame.style.top = `${y}px`;
-  flame.style.setProperty("--s", scale.toFixed(4));
-  flameHit.style.left = `${x}px`;
-  flameHit.style.top = `${y}px`;
-  flameHit.style.width = `${scale * 110}px`;
-  flameHit.style.height = `${scale * 150}px`;
+  sheet.style.width = `${(IMAGE.w * scale).toFixed(2)}px`;
+  sheet.style.height = `${(IMAGE.h * scale).toFixed(2)}px`;
+  sheet.style.setProperty("--s", scale.toFixed(4));
 }
 
 function vibrate(pattern) {
@@ -218,21 +189,30 @@ function setAppIcon(lit) {
   link.sizes = lit ? "512x512" : "192x192";
 }
 
+function stopSmoke() {
+  window.clearTimeout(smokeTimer);
+  window.clearTimeout(coldTimer);
+  flame.classList.remove("smoking", "cold");
+}
+
 function finish() {
   phase = "out";
   setAppIcon(false);
   meter.disarm();
   stopMic();
   flameHit.hidden = true;
-  flame.classList.remove("gust");
-  flame.classList.add("out");
+  flame.classList.remove("gust", "weak");
+  flame.classList.add("out", "smoking");
   stage.classList.add("is-out");
   vibrate([18, 40, 28, 40, 80]);
   setCaption("", "");
   window.clearTimeout(closeTimer);
+  window.clearTimeout(coldTimer);
+  window.clearTimeout(smokeTimer);
+  coldTimer = window.setTimeout(() => flame.classList.add("cold"), 700);
+  smokeTimer = window.setTimeout(() => flame.classList.remove("smoking"), SMOKE_MS);
   closeTimer = window.setTimeout(() => {
-    if (guestName) setCaption(guestName, "願愛讓每一刻都發亮");
-    else setCaption("願愛讓每一刻都發亮", "");
+    setCaption("願愛讓每一刻都發亮", "");
     againBtn.hidden = false;
   }, 2200);
 }
@@ -254,29 +234,16 @@ function registerBlow() {
   finish();
 }
 
-function onTime() {
-  if (phase !== "playing") return;
-  const index = verseIndex(audio.currentTime);
-  if (index === verseAt) return;
-  verseAt = index;
-  if (index < 0) {
-    if (micState === "off") setCaption("唱完後輕點燭火", "");
-    else setCaption("麥克風已準備好", "唱完就可以吹蠟燭");
-    return;
-  }
-  const [line, next] = VERSES[index];
-  setCaption(line, next);
-}
-
 function begin() {
   if (phase !== "idle") return;
   phase = "playing";
-  verseAt = -2;
   startBtn.hidden = true;
   againBtn.hidden = true;
   stage.classList.remove("is-out");
+  stopSmoke();
   flame.classList.remove("out", "weak", "gust");
   setAppIcon(true);
+  setCaption("", "");
   jumpTo = Number.isFinite(rehearseFrom) && rehearseFrom > 0 ? rehearseFrom : 0;
   applySeek();
   audio.play().then(applySeek).catch(() => {
@@ -287,19 +254,19 @@ function begin() {
   });
   requestMic();
   keepAwake();
-  onTime();
 }
 
 function relight() {
   blows = 0;
-  verseAt = -2;
   phase = "playing";
   window.clearTimeout(closeTimer);
   againBtn.hidden = true;
   flameHit.hidden = true;
+  stopSmoke();
   flame.classList.remove("out", "weak", "gust");
   stage.classList.remove("is-out");
   setAppIcon(true);
+  setCaption("", "");
   jumpTo = 0;
   stopMic();
   audio.currentTime = 0;
@@ -309,7 +276,6 @@ function relight() {
   micState = micOff ? "off" : "pending";
   requestMic();
   keepAwake();
-  onTime();
 }
 
 startBtn.addEventListener("click", () => {
@@ -327,7 +293,6 @@ flameHit.addEventListener("click", (event) => {
   registerBlow();
 });
 
-audio.addEventListener("timeupdate", onTime);
 audio.addEventListener("loadedmetadata", applySeek);
 audio.addEventListener("playing", applySeek);
 audio.addEventListener("ended", () => {
@@ -347,7 +312,11 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-photo.addEventListener("load", placeFlame);
-window.addEventListener("resize", placeFlame);
-placeFlame();
+photo.addEventListener("load", placeSheet);
+window.addEventListener("resize", placeSheet);
+window.addEventListener("orientationchange", placeSheet);
+window.visualViewport?.addEventListener("resize", placeSheet);
+new ResizeObserver(placeSheet).observe(stage);
+placeSheet();
+window.setTimeout(placeSheet, 300);
 setCaption("點一下，開始唱歌", "請先打開手機聲音");
