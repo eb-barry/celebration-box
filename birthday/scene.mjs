@@ -212,7 +212,7 @@ function finish() {
   coldTimer = window.setTimeout(() => flame.classList.add("cold"), 700);
   smokeTimer = window.setTimeout(() => flame.classList.remove("smoking"), SMOKE_MS);
   closeTimer = window.setTimeout(() => {
-    setCaption("願愛讓每一刻都發亮", "");
+    setCaption("願友誼讓每一刻都發亮", "");
     againBtn.hidden = false;
   }, 2200);
 }
