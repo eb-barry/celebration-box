@@ -211,8 +211,16 @@ function showWish() {
   wishCopy();
 }
 
+function setAppIcon(lit) {
+  const link = document.querySelector("#favicon");
+  if (!link) return;
+  link.href = lit ? "icon-512.png" : "icon-192.png";
+  link.sizes = lit ? "512x512" : "192x192";
+}
+
 function finish() {
   phase = "out";
+  setAppIcon(false);
   meter.disarm();
   stopMic();
   flameHit.hidden = true;
@@ -268,6 +276,7 @@ function begin() {
   againBtn.hidden = true;
   stage.classList.remove("is-out");
   flame.classList.remove("out", "weak", "gust");
+  setAppIcon(true);
   jumpTo = Number.isFinite(rehearseFrom) && rehearseFrom > 0 ? rehearseFrom : 0;
   applySeek();
   audio.play().then(applySeek).catch(() => {
@@ -290,6 +299,7 @@ function relight() {
   flameHit.hidden = true;
   flame.classList.remove("out", "weak", "gust");
   stage.classList.remove("is-out");
+  setAppIcon(true);
   jumpTo = 0;
   stopMic();
   audio.currentTime = 0;

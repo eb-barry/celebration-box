@@ -1,0 +1,23 @@
+{
+  "name": "生日",
+  "short_name": "生日",
+  "start_url": "birthday/",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#aa887b",
+  "theme_color": "#140e0a",
+  "icons": [
+    {
+      "src": "birthday/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "birthday/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
