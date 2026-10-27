@@ -29,19 +29,43 @@ const secondary = document.querySelector("#secondary");
 const debugEl = document.querySelector("#debug");
 const audio = document.querySelector("#song");
 const SONG_GAIN = 3.5;
+const MIC_AUDIO = {
+  echoCancellation: false,
+  noiseSuppression: false,
+  autoGainControl: false,
+};
 let songCtx = null;
+let songGain = null;
+let micSource = null;
+let micToken = 0;
+
+function preferPlayback() {
+  try {
+    if (navigator.audioSession && !stream) navigator.audioSession.type = "playback";
+  } catch {
+    /* a few browsers reject the session change */
+  }
+}
+
+function restoreSong() {
+  audio.volume = 1;
+  if (songGain) songGain.gain.value = SONG_GAIN;
+  preferPlayback();
+  songCtx?.resume();
+}
 
 function armSong() {
   const Ctx = window.AudioContext || window.webkitAudioContext;
   if (!Ctx) return;
   if (!songCtx) {
-    const ctx = new Ctx();
+    const ctx = new Ctx({ latencyHint: "playback" });
     const gain = ctx.createGain();
     gain.gain.value = SONG_GAIN;
     ctx.createMediaElementSource(audio).connect(gain).connect(ctx.destination);
     songCtx = ctx;
+    songGain = gain;
   }
-  songCtx.resume();
+  restoreSong();
 }
 
 const meter = createBlowMeter();
@@ -136,12 +160,43 @@ function listenFrame(now) {
 function stopMic() {
   if (raf) cancelAnimationFrame(raf);
   raf = 0;
+  micToken += 1;
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
+  micSource?.disconnect();
+  micSource = null;
   analyser = null;
-  audioCtx?.close().catch(() => {});
+  if (audioCtx && audioCtx !== songCtx) audioCtx.close().catch(() => {});
   audioCtx = null;
   flame.style.setProperty("--lean", "0");
+  preferPlayback();
+}
+
+function openMic() {
+  return navigator.mediaDevices.getUserMedia({ audio: MIC_AUDIO, video: false });
+}
+
+// The permission prompt has to happen on the opening click. The capture
+// itself must not stay open during the song: a live microphone switches
+// the phone into a call and the music drops to a whisper.
+function primeMic() {
+  if (micOff || !navigator.mediaDevices?.getUserMedia) {
+    micState = "off";
+    return;
+  }
+  const token = ++micToken;
+  openMic()
+    .then((live) => {
+      live.getTracks().forEach((track) => track.stop());
+      if (token !== micToken || stream) return;
+      micState = "ready";
+      restoreSong();
+    })
+    .catch(() => {
+      if (token !== micToken) return;
+      micState = "off";
+      restoreSong();
+    });
 }
 
 function wishCopy() {
@@ -152,42 +207,43 @@ function wishCopy() {
 }
 
 function requestMic() {
-  if (micOff || !navigator.mediaDevices?.getUserMedia) {
+  if (micOff || micState === "off" || !navigator.mediaDevices?.getUserMedia) {
     micState = "off";
     wishCopy();
     return;
   }
-  stopMic();
-  const ctx = new AudioContext();
+  const ctx = songCtx;
+  if (!ctx) {
+    micState = "off";
+    wishCopy();
+    return;
+  }
+  const token = ++micToken;
+  stream?.getTracks().forEach((track) => track.stop());
+  stream = null;
+  micSource?.disconnect();
+  micSource = null;
   audioCtx = ctx;
   ctx.resume();
-  navigator.mediaDevices
-    .getUserMedia({
-      audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-      },
-      video: false,
-    })
+  openMic()
     .then((live) => {
-      if (phase === "out" || audioCtx !== ctx) {
+      if (token !== micToken || phase === "out") {
         live.getTracks().forEach((track) => track.stop());
         return;
       }
       micState = "live";
       stream = live;
-      const source = ctx.createMediaStreamSource(live);
+      micSource = ctx.createMediaStreamSource(live);
       analyser = ctx.createAnalyser();
       analyser.fftSize = 2048;
       analyser.smoothingTimeConstant = 0.4;
-      source.connect(analyser);
+      micSource.connect(analyser);
       if (!raf) raf = requestAnimationFrame(listenFrame);
       if (phase === "wish") meter.arm(performance.now());
       wishCopy();
     })
     .catch(() => {
-      if (audioCtx !== ctx) return;
+      if (token !== micToken) return;
       micState = "off";
       wishCopy();
     });
@@ -197,6 +253,7 @@ function showWish() {
   phase = "wish";
   blows = 0;
   meter.arm(performance.now());
+  requestMic();
   wishCopy();
 }
 
@@ -279,7 +336,7 @@ function begin() {
     stopMic();
     setCaption("請再點一下", "聲音還沒有開始");
   });
-  requestMic();
+  primeMic();
   keepAwake();
 }
 
@@ -302,7 +359,7 @@ function relight() {
     setCaption("請再點一下", "聲音還沒有開始");
   });
   micState = micOff ? "off" : "pending";
-  requestMic();
+  primeMic();
   keepAwake();
 }
 
