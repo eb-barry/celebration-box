@@ -80,12 +80,15 @@ button {
   height: 0;
   --lean: 0;
   --flame-scale: 1;
+  perspective: calc(var(--s) * 160px);
+  perspective-origin: 50% 100%;
   pointer-events: none;
 }
 
 .flame-lean {
   transform: translateX(calc(var(--lean) * var(--s) * 14px)) rotate(calc(var(--lean) * 8deg));
   transform-origin: bottom center;
+  transform-style: preserve-3d;
 }
 
 .flame-body {
@@ -96,6 +99,8 @@ button {
   height: calc(var(--s) * 84px);
   transform: translateX(-50%) scale(var(--flame-scale));
   transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.05s steps(1, end), opacity 0.18s linear;
 }
 
 .flame-sway {
@@ -108,12 +113,23 @@ button {
     drop-shadow(0 0 16px rgba(255, 120, 30, 0.28));
 }
 
-.flame-anchor.weak {
-  --flame-scale: 0.58;
+.flame-anchor.bow .flame-lean {
+  transform: none;
 }
 
-.flame-anchor.gust .flame-body {
-  animation: gust 1.05s ease-out;
+.flame-anchor.bow .flame-body {
+  transform: translateX(-50%) rotateX(42deg) scale(calc(var(--flame-scale) * 0.96), calc(var(--flame-scale) * 0.68));
+}
+
+.flame-anchor.bow .flame-sway,
+.flame-anchor.bow .outer,
+.flame-anchor.bow .mid,
+.flame-anchor.bow .core {
+  animation: none;
+}
+
+.flame-anchor.bow .flame-sway {
+  filter: drop-shadow(0 0 5px rgba(255, 170, 60, 0.4));
 }
 
 .flame-anchor.out .flame-sway {
@@ -121,7 +137,7 @@ button {
 }
 
 .flame-anchor.out .flame-body {
-  animation: die 0.7s ease-in forwards;
+  opacity: 0;
 }
 
 .flame-anchor.cold .flame-lean {
@@ -177,7 +193,7 @@ button {
   opacity: 0;
 }
 
-.flame-anchor.gust .spark {
+.flame-anchor.bow .spark {
   animation: spark 0.8s ease-out;
 }
 
@@ -365,28 +381,6 @@ button {
   61% { transform: translateX(-50%) rotate(-2deg) scale(1.02, 0.78); }
   76% { transform: translateX(-50%) rotate(-6deg) scale(0.88, 1.18); }
   89% { transform: translateX(-50%) rotate(3deg) scale(1.04, 0.9); }
-}
-
-@keyframes gust {
-  0% { transform: translateX(-50%) scale(var(--flame-scale)); }
-  40% {
-    transform: translateX(calc(-50% + var(--s) * 26px))
-      scale(calc(var(--flame-scale) * 0.35), calc(var(--flame-scale) * 1.15))
-      rotate(28deg);
-  }
-  100% { transform: translateX(-50%) scale(var(--flame-scale)); }
-}
-
-@keyframes die {
-  0% { transform: translateX(-50%) scale(var(--flame-scale)); opacity: 1; }
-  40% {
-    transform: translateX(calc(-50% + var(--s) * 12px)) scale(calc(var(--flame-scale) * 1.05), calc(var(--flame-scale) * 0.35)) rotate(16deg);
-    opacity: 0.85;
-  }
-  100% {
-    transform: translateX(calc(-50% + var(--s) * 20px)) scale(0.15, 0.04);
-    opacity: 0;
-  }
 }
 
 @keyframes spark {

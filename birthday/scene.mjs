@@ -2,6 +2,8 @@ import { createBlowMeter } from "./blow-meter.mjs";
 
 const IMAGE = { w: 768, h: 1376 };
 const SMOKE_MS = 5000;
+const BOW_MS = 1000;
+const SNUFF_MS = 200;
 
 const params = new URLSearchParams(location.search);
 const rehearseFrom = Number(params.get("from"));
@@ -55,6 +57,7 @@ let captionKey = "";
 let closeTimer = 0;
 let smokeTimer = 0;
 let coldTimer = 0;
+let bowTimer = 0;
 
 const timeBuf = new Uint8Array(2048);
 const freqBuf = new Uint8Array(1024);
@@ -207,7 +210,16 @@ function setAppIcon(lit) {
 function stopSmoke() {
   window.clearTimeout(smokeTimer);
   window.clearTimeout(coldTimer);
-  flame.classList.remove("smoking", "cold");
+  window.clearTimeout(bowTimer);
+  flame.classList.remove("smoking", "cold", "bow");
+}
+
+function bowFlame() {
+  flame.classList.remove("bow");
+  void flame.offsetWidth;
+  flame.classList.add("bow");
+  window.clearTimeout(bowTimer);
+  bowTimer = window.setTimeout(() => flame.classList.remove("bow"), BOW_MS);
 }
 
 function finish() {
@@ -216,16 +228,20 @@ function finish() {
   meter.disarm();
   stopMic();
   flameHit.hidden = true;
-  flame.classList.remove("gust", "weak");
-  flame.classList.add("out", "smoking");
+  window.clearTimeout(bowTimer);
+  flame.classList.add("out");
   stage.classList.add("is-out");
   vibrate([18, 40, 28, 40, 80]);
   setCaption("", "");
   window.clearTimeout(closeTimer);
   window.clearTimeout(coldTimer);
   window.clearTimeout(smokeTimer);
-  coldTimer = window.setTimeout(() => flame.classList.add("cold"), 700);
-  smokeTimer = window.setTimeout(() => flame.classList.remove("smoking"), SMOKE_MS);
+  coldTimer = window.setTimeout(() => {
+    if (phase !== "out") return;
+    flame.classList.remove("bow");
+    flame.classList.add("cold", "smoking");
+  }, SNUFF_MS);
+  smokeTimer = window.setTimeout(() => flame.classList.remove("smoking"), SNUFF_MS + SMOKE_MS);
   closeTimer = window.setTimeout(() => {
     setCaption("願友誼讓每一刻都發亮", "");
     againBtn.hidden = false;
@@ -236,14 +252,8 @@ function registerBlow() {
   if (phase !== "wish") return;
   blows += 1;
   vibrate(blows === 3 ? 30 : 16);
-  if (blows === 1) {
-    flame.classList.add("gust");
-    window.setTimeout(() => flame.classList.remove("gust"), 1100);
-    return;
-  }
-  if (blows === 2) {
-    flame.classList.add("weak", "gust");
-    window.setTimeout(() => flame.classList.remove("gust"), 1100);
+  if (blows < 3) {
+    bowFlame();
     return;
   }
   finish();
@@ -256,7 +266,7 @@ function begin() {
   againBtn.hidden = true;
   stage.classList.remove("is-out");
   stopSmoke();
-  flame.classList.remove("out", "weak", "gust");
+  flame.classList.remove("out", "bow");
   setAppIcon(true);
   setCaption("", "");
   jumpTo = Number.isFinite(rehearseFrom) && rehearseFrom > 0 ? rehearseFrom : 0;
@@ -279,7 +289,7 @@ function relight() {
   againBtn.hidden = true;
   flameHit.hidden = true;
   stopSmoke();
-  flame.classList.remove("out", "weak", "gust");
+  flame.classList.remove("out", "bow");
   stage.classList.remove("is-out");
   setAppIcon(true);
   setCaption("", "");
