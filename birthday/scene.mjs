@@ -416,24 +416,7 @@ function finish() {
   carryFlame(body);
 }
 
-// How high the control point must sit so the parabola's crest reaches `crest`
-// (a negative offset: up the picture, toward the dark wall).
-function backwardLift(dy, crest) {
-  const drop = Math.max(dy, 1);
-  let lo = 40;
-  let hi = Math.max(1800, drop * 6);
-  for (let n = 0; n < 18; n += 1) {
-    const mid = (lo + hi) / 2;
-    const u = mid / (2 * mid + drop);
-    const y = 2 * (1 - u) * u * -mid + u * u * drop;
-    if (y > crest) lo = mid;
-    else hi = mid;
-  }
-  return (lo + hi) / 2;
-}
-
-// The flame leaves the wick and arcs backward, toward the dark wall,
-// then down onto the closing line. Three seconds, then it is gone.
+// The flame drifts down from the wick to the closing line. Three seconds, then it is gone.
 function carryFlame(body) {
   if (!body) {
     igniteEnding();
@@ -451,32 +434,14 @@ function carryFlame(body) {
     const text = primary.getBoundingClientRect();
     const dx = text.left + text.width / 2 - wick.left;
     const dy = text.top + text.height / 2 - wick.top + height * 0.5;
-    const u = t < 0.5 ? 2 * t * t : 1 - ((-2 * t + 2) ** 2) / 2;
-    const center0 = wick.top - height * 0.5;
-    const crestScreen = window.innerHeight * 0.22;
-    const crest = Math.min(-90, crestScreen - center0);
-    const lift = backwardLift(dy, crest);
-    // The lamp hangs on the center line, so the crest steps onto the dark
-    // wall beside it. The landing is still the middle of the line.
-    const aside = Math.max(140, window.innerWidth * 0.36);
-    const p1x = dx * 0.2 - aside;
-    const p1y = -lift;
-    const b = 2 * (1 - u) * u;
-    const c = u * u;
-    const bow = Math.sin(Math.PI * u);
-    return {
-      x: b * p1x + c * dx,
-      y: b * p1y + c * dy,
-      lean: bow * 16,
-      squat: 1 - bow * 0.1,
-    };
+    return { x: dx * t, y: dy * t };
   }
 
   function frame(now) {
     if (phase !== "out") return;
     const t = duration === 0 ? 1 : Math.min(1, (now - started) / duration);
     const spot = point(t);
-    body.style.transform = `translate(${spot.x.toFixed(2)}px, ${spot.y.toFixed(2)}px) translateX(-50%) rotateX(${spot.lean.toFixed(2)}deg) scale(var(--flame-scale), calc(var(--flame-scale) * ${spot.squat.toFixed(3)}))`;
+    body.style.transform = `translate(${spot.x.toFixed(2)}px, ${spot.y.toFixed(2)}px) translateX(-50%) scale(var(--flame-scale))`;
     if (t < 1) {
       carryRaf = requestAnimationFrame(frame);
       return;
