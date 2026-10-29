@@ -57,6 +57,27 @@ button {
   object-fit: fill;
 }
 
+.cake-name {
+  position: absolute;
+  z-index: 1;
+  left: 51%;
+  top: 63.8%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  font-family: "Great Vibes", "Ma Shan Zheng", cursive;
+  font-size: calc(var(--s) * 64px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: #c49a52;
+  text-shadow:
+    0 0.045em 0 rgba(92, 54, 16, 0.55),
+    0 0.09em 0.14em rgba(70, 40, 10, 0.28);
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none;
+}
+
 .veil {
   position: absolute;
   inset: 0;
