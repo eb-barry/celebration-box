@@ -1,5 +1,6 @@
-// A blow is a sudden, loud, low rush of air that stays a moment, then falls away.
-// One continuous breath counts once. The next breath has to ease off first.
+// A blow is a sudden, loud, low rush of air. One continuous breath counts once.
+// Phone puffs are short, so a hard onset counts immediately and a softer one
+// only has to stay loud for a moment. The next breath has to ease off first.
 
 export function createBlowMeter() {
   const history = [];
@@ -34,28 +35,39 @@ export function createBlowMeter() {
     }
 
     if (cooling) {
-      if (rms < Math.max(0.05, ambientRms * 1.8)) cooling = false;
-      return null;
+      if (rms < Math.max(0.035, ambientRms * 1.6)) cooling = false;
+      else return null;
     }
 
     let ref = history[0];
     for (const item of history) {
-      if (now - item.now >= 280) ref = item;
+      if (now - item.now >= 200) ref = item;
       else break;
     }
 
     const attack = rms / Math.max(ref.rms, 0.004);
-    const loud = rms > Math.max(0.08, ambientRms * 3.3);
-    const bassy = low > Math.max(0.1, ambientLow * 2.2);
-    const sudden = attack > 2;
-    if (!(loud && bassy && sudden)) {
+    const loud = rms > Math.max(0.04, ambientRms * 2.6);
+    const bassy = low > Math.max(0.06, ambientLow * 1.9);
+    const sudden = attack > 1.65;
+    const gap = now - lastTrigger >= 350;
+    const hard = rms > Math.max(0.11, ambientRms * 4);
+
+    if (loud && bassy && sudden && hard && gap) {
+      lastTrigger = now;
+      overSince = 0;
+      cooling = true;
+      return { at: now };
+    }
+
+    // A softer puff may lose its attack once the window fills with the puff
+    // itself. Keep the onset and count it if the air stays for a short beat.
+    if (!(loud && bassy && (sudden || overSince))) {
       overSince = 0;
       return null;
     }
 
     if (!overSince) overSince = now;
-    if (now - overSince < 180) return null;
-    if (now - lastTrigger < 400) return null;
+    if (now - overSince < 80 || !gap) return null;
 
     lastTrigger = now;
     overSince = 0;

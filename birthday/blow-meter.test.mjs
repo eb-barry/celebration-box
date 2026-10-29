@@ -59,6 +59,25 @@ test("three separate breaths each count", () => {
   assert.equal(hits.length, 3);
 });
 
+test("a short phone puff counts once", () => {
+  const meter = createBlowMeter();
+  meter.arm(0);
+  quiet(meter, 0, 400);
+
+  let hits = 0;
+  for (let now = 500; now <= 620; now += 20) {
+    if (meter.push({ rms: 0.07, low: 0.25, now })) hits += 1;
+  }
+  assert.equal(hits, 1);
+
+  quiet(meter, 700, 1000);
+  let second = null;
+  for (let now = 1100; now <= 1220; now += 20) {
+    second = meter.push({ rms: 0.08, low: 0.28, now }) || second;
+  }
+  assert.ok(second);
+});
+
 test("a slow rise, like talking, does not count", () => {
   const meter = createBlowMeter();
   meter.arm(0);
