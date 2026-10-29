@@ -30,18 +30,19 @@ const debugEl = document.querySelector("#debug");
 const audio = document.querySelector("#song");
 const SONG_GAIN = 3.5;
 const MIC_AUDIO = {
-  echoCancellation: false,
-  noiseSuppression: false,
-  autoGainControl: false,
+  echoCancellation: { ideal: false },
+  noiseSuppression: { ideal: false },
+  autoGainControl: { ideal: false },
 };
 let songCtx = null;
 let songGain = null;
+let micCtx = null;
 let micSource = null;
 let micMute = null;
+let processor = null;
 let keepAlive = null;
 let micToken = 0;
 let micOpening = false;
-let contextWatched = false;
 
 function setAudioSession(type) {
   try {
@@ -62,7 +63,7 @@ function preferCapture() {
 function restoreSong() {
   audio.volume = 1;
   if (songGain) songGain.gain.value = SONG_GAIN;
-  preferPlayback();
+  if (phase === "playing" && !stream) preferPlayback();
   songCtx?.resume();
 }
 
@@ -92,18 +93,32 @@ function armSong() {
     songCtx = ctx;
     songGain = gain;
     startKeepAlive(ctx);
-    watchContext(ctx);
   }
   restoreSong();
 }
 
-function watchContext(ctx) {
-  if (contextWatched) return;
-  contextWatched = true;
-  ctx.addEventListener("statechange", () => {
-    if (phase !== "wish" || ctx.state === "running") return;
-    ctx.resume().catch(() => {});
-  });
+// The microphone gets its own context, unlocked on the opening tap.
+// The song context owns the media element; Safari feeds a mic attached
+// to that context nothing but silence.
+function armMic() {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx || micOff) return;
+  if (!micCtx || micCtx.state === "closed") {
+    const ctx = new Ctx();
+    const mute = ctx.createGain();
+    mute.gain.value = 0.0001;
+    const osc = ctx.createOscillator();
+    osc.frequency.value = 30;
+    osc.connect(mute);
+    mute.connect(ctx.destination);
+    osc.start();
+    micCtx = ctx;
+    ctx.addEventListener("statechange", () => {
+      if (phase !== "wish" || ctx.state === "running") return;
+      ctx.resume().catch(() => {});
+    });
+  }
+  micCtx.resume();
 }
 
 const meter = createBlowMeter();
@@ -111,7 +126,6 @@ let phase = "idle";
 let blows = 0;
 let micState = micOff ? "off" : "pending";
 let stream = null;
-let audioCtx = null;
 let analyser = null;
 let raf = 0;
 let wakeLock = null;
@@ -122,7 +136,7 @@ let coldTimer = 0;
 let bowTimer = 0;
 
 const timeBuf = new Uint8Array(2048);
-const freqBuf = new Uint8Array(1024);
+let heardSample = false;
 
 function setCaption(main, sub) {
   const key = `${main}\n${sub}`;
@@ -163,36 +177,40 @@ async function keepAwake() {
   }
 }
 
-function readLevels() {
+function noteLevels(rms, now) {
+  if (debug) {
+    debugEl.hidden = false;
+    debugEl.textContent = `rms ${rms.toFixed(3)}  mic ${micState}  ctx ${micCtx?.state ?? "-"}`;
+  }
+  const lean = Math.min(1, rms / 0.12);
+  flame.style.setProperty("--lean", lean.toFixed(3));
+  const hit = meter.push({ rms, now });
+  if (hit) registerBlow();
+}
+
+function listenFrame(now) {
+  raf = requestAnimationFrame(listenFrame);
+  if (!analyser || processor || phase !== "wish") return;
+  if (micCtx && micCtx.state !== "running") return;
   analyser.getByteTimeDomainData(timeBuf);
-  analyser.getByteFrequencyData(freqBuf);
   let sum = 0;
   for (let i = 0; i < timeBuf.length; i += 1) {
     const v = (timeBuf[i] - 128) / 128;
     sum += v * v;
   }
-  const rms = Math.sqrt(sum / timeBuf.length);
-  const binHz = audioCtx.sampleRate / analyser.fftSize;
-  const maxBin = Math.max(2, Math.round(400 / binHz));
-  let lowSum = 0;
-  for (let i = 1; i <= maxBin && i < freqBuf.length; i += 1) {
-    lowSum += freqBuf[i] / 255;
-  }
-  return { rms, low: lowSum / maxBin };
+  noteLevels(Math.sqrt(sum / timeBuf.length), now);
 }
 
-function listenFrame(now) {
-  raf = requestAnimationFrame(listenFrame);
-  if (!analyser || phase !== "wish" || songCtx?.state === "suspended" || songCtx?.state === "interrupted") return;
-  const levels = readLevels();
-  if (debug) {
-    debugEl.hidden = false;
-    debugEl.textContent = `rms ${levels.rms.toFixed(3)}  low ${levels.low.toFixed(3)}  mic ${micState}  ctx ${songCtx?.state ?? "-"}`;
-  }
-  const lean = Math.min(1, levels.rms / 0.18);
-  flame.style.setProperty("--lean", lean.toFixed(3));
-  const hit = meter.push({ ...levels, now });
-  if (hit) registerBlow();
+function disconnectMeter() {
+  micSource?.disconnect();
+  micMute?.disconnect();
+  analyser?.disconnect();
+  processor?.disconnect();
+  if (processor) processor.onaudioprocess = null;
+  micSource = null;
+  micMute = null;
+  analyser = null;
+  processor = null;
 }
 
 function stopMic() {
@@ -200,67 +218,77 @@ function stopMic() {
   raf = 0;
   micToken += 1;
   micOpening = false;
+  heardSample = false;
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
-  micSource?.disconnect();
-  micMute?.disconnect();
-  analyser?.disconnect();
-  micSource = null;
-  micMute = null;
-  analyser = null;
-  if (audioCtx && audioCtx !== songCtx) audioCtx.close().catch(() => {});
-  audioCtx = null;
+  disconnectMeter();
   flame.style.setProperty("--lean", "0");
-  preferPlayback();
+  if (phase !== "wish") preferPlayback();
 }
 
 function graphIsLive() {
   const trackLive = stream?.getTracks().some((track) => track.readyState === "live");
-  return Boolean(trackLive && analyser && songCtx && songCtx.state === "running");
+  return Boolean(trackLive && (processor || analyser) && micCtx && micCtx.state === "running");
 }
 
-// The analyser has to feed the destination or Safari never pulls mic samples.
-// The gain is kept tiny so the breath is not played back through the speaker.
-function pullGraph(ctx, live) {
-  micSource?.disconnect();
-  micMute?.disconnect();
-  analyser?.disconnect();
+function hearBuffer(input, now) {
+  if (!input.length) return;
+  let sum = 0;
+  for (let i = 0; i < input.length; i += 1) sum += input[i] * input[i];
+  noteLevels(Math.sqrt(sum / input.length), now);
+}
+
+// ScriptProcessor pulls real samples on Safari. A tiny gain keeps the
+// branch alive without playing the breath back through the speaker.
+function connectMeter(ctx, live) {
+  disconnectMeter();
   micSource = ctx.createMediaStreamSource(live);
   analyser = ctx.createAnalyser();
   analyser.fftSize = 2048;
-  analyser.smoothingTimeConstant = 0.25;
+  analyser.smoothingTimeConstant = 0.2;
+  micSource.connect(analyser);
   micMute = ctx.createGain();
   micMute.gain.value = 0.0001;
-  micSource.connect(analyser);
-  analyser.connect(micMute);
-  micMute.connect(ctx.destination);
+  try {
+    processor = ctx.createScriptProcessor(2048, 1, 1);
+    micSource.connect(processor);
+    processor.connect(micMute);
+    micMute.connect(ctx.destination);
+    processor.onaudioprocess = (event) => {
+      heardSample = true;
+      const output = event.outputBuffer.getChannelData(0);
+      output.fill(0);
+      if (phase !== "wish") return;
+      const channels = event.inputBuffer.numberOfChannels;
+      const input = event.inputBuffer.getChannelData(0);
+      if (channels > 1) {
+        const other = event.inputBuffer.getChannelData(1);
+        const mixed = new Float32Array(input.length);
+        for (let i = 0; i < input.length; i += 1) mixed[i] = (input[i] + other[i]) * 0.5;
+        hearBuffer(mixed, performance.now());
+        return;
+      }
+      hearBuffer(input, performance.now());
+    };
+    const generation = micToken;
+    window.setTimeout(() => {
+      if (generation !== micToken || heardSample || phase !== "wish" || !analyser || raf) return;
+      processor = null;
+      raf = requestAnimationFrame(listenFrame);
+    }, 500);
+  } catch {
+    processor = null;
+    analyser.connect(micMute);
+    micMute.connect(ctx.destination);
+    if (!raf) raf = requestAnimationFrame(listenFrame);
+  }
 }
 
 function openMic() {
-  return navigator.mediaDevices.getUserMedia({ audio: MIC_AUDIO, video: false });
-}
-
-// The permission prompt has to happen on the opening click. The capture
-// itself must not stay open during the song: a live microphone switches
-// the phone into a call and the music drops to a whisper.
-function primeMic() {
-  if (micOff || !navigator.mediaDevices?.getUserMedia) {
-    micState = "off";
-    return;
-  }
-  const token = ++micToken;
-  openMic()
-    .then((live) => {
-      live.getTracks().forEach((track) => track.stop());
-      if (token !== micToken || stream) return;
-      micState = "ready";
-      restoreSong();
-    })
-    .catch(() => {
-      if (token !== micToken) return;
-      micState = "off";
-      restoreSong();
-    });
+  const devices = navigator.mediaDevices;
+  return devices
+    .getUserMedia({ audio: MIC_AUDIO, video: false })
+    .catch(() => devices.getUserMedia({ audio: true, video: false }));
 }
 
 function wishCopy() {
@@ -276,7 +304,8 @@ function requestMic() {
     return;
   }
   if (micOpening || graphIsLive()) return;
-  const ctx = songCtx;
+  armMic();
+  const ctx = micCtx;
   if (!ctx) {
     micState = "retry";
     wishCopy();
@@ -286,31 +315,27 @@ function requestMic() {
   const token = ++micToken;
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
-  audioCtx = ctx;
   preferCapture();
-  const resume = ctx.resume();
   openMic()
     .then(async (live) => {
-      if (token !== micToken || phase === "out") {
+      if (token !== micToken || phase !== "wish") {
         live.getTracks().forEach((track) => track.stop());
         return;
       }
       stream = live;
       try {
-        await resume;
+        await ctx.resume();
       } catch {
-        /* resume outside a tap can fail; the keep-alive usually already won */
+        /* the opening tap already unlocked this context */
       }
-      if (token !== micToken || phase === "out") {
+      if (token !== micToken || phase !== "wish") {
         live.getTracks().forEach((track) => track.stop());
         if (stream === live) stream = null;
         return;
       }
-      pullGraph(ctx, live);
-      if (ctx.state === "running") micState = "live";
-      else micState = "retry";
-      if (!raf) raf = requestAnimationFrame(listenFrame);
-      if (phase === "wish") meter.arm(performance.now());
+      connectMeter(ctx, live);
+      micState = ctx.state === "running" ? "live" : "retry";
+      meter.arm(performance.now());
       wishCopy();
     })
     .catch(() => {
@@ -327,7 +352,7 @@ function requestMic() {
 // and must not change the wish caption into a "tap the screen" instruction.
 function nudgeMic() {
   if (phase !== "wish" || micOff) return;
-  songCtx?.resume();
+  micCtx?.resume();
   if (!graphIsLive()) requestMic();
 }
 
@@ -411,6 +436,7 @@ function begin() {
   setCaption("", "");
   jumpTo = Number.isFinite(rehearseFrom) && rehearseFrom > 0 ? rehearseFrom : 0;
   applySeek();
+  armMic();
   armSong();
   audio.play().then(applySeek).catch(() => {
     phase = "idle";
@@ -418,7 +444,6 @@ function begin() {
     stopMic();
     setCaption("請再點一下", "聲音還沒有開始");
   });
-  primeMic();
   keepAwake();
 }
 
@@ -436,12 +461,12 @@ function relight() {
   jumpTo = 0;
   stopMic();
   audio.currentTime = 0;
+  armMic();
   armSong();
   audio.play().catch(() => {
     setCaption("請再點一下", "聲音還沒有開始");
   });
   micState = micOff ? "off" : "pending";
-  primeMic();
   keepAwake();
 }
 
@@ -468,12 +493,18 @@ document.addEventListener("visibilitychange", () => {
   if (phase === "playing") {
     keepAwake();
     if (audio.paused) {
+      armMic();
       armSong();
       audio.play().catch(() => {
         startBtn.hidden = false;
         setCaption("點一下繼續", "");
       });
     }
+    return;
+  }
+  if (phase === "wish") {
+    micCtx?.resume();
+    if (!graphIsLive()) requestMic();
   }
 });
 
