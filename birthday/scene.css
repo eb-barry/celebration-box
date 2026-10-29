@@ -317,25 +317,50 @@ button {
 }
 
 .caption.is-ending.is-lit {
-  background: linear-gradient(to top, rgba(42, 6, 4, 0.42) 0%, rgba(28, 4, 3, 0.16) 48%, transparent 100%);
+  background: transparent;
+}
+
+.caption.is-ending.is-lit::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 28%;
+  width: 150vw;
+  height: 82vh;
+  transform: translate(-50%, -46%);
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 252, 236, 0.98) 0%,
+    rgba(255, 228, 130, 0.92) 7%,
+    rgba(255, 196, 48, 0.74) 16%,
+    rgba(255, 170, 24, 0.46) 32%,
+    rgba(255, 154, 18, 0.2) 50%,
+    transparent 70%
+  );
 }
 
 .caption.is-ending.is-lit .primary {
-  background: linear-gradient(180deg, #ffffff 0%, #fffdf6 30%, #ffe07a 52%, #fff3bc 76%, #ffffff 100%);
+  background: linear-gradient(180deg, #fffef8 0%, #fff6c8 20%, #ffd24a 48%, #ffc226 68%, #fff1b0 86%, #fffef6 100%);
   -webkit-background-clip: text;
   background-clip: text;
-  color: #fffef8;
+  color: #fff8dc;
   -webkit-text-fill-color: transparent;
   filter:
-    drop-shadow(0 0 1px #ffffff)
-    drop-shadow(0 0 7px rgba(255, 228, 150, 0.95))
-    drop-shadow(0 0 18px #ff3d2a)
-    drop-shadow(0 0 36px #e01010)
-    drop-shadow(0 0 62px rgba(198, 8, 8, 0.94));
+    drop-shadow(0 0 2px #fffef6)
+    drop-shadow(0 0 10px rgba(255, 236, 160, 1))
+    drop-shadow(0 0 24px #ffd24a)
+    drop-shadow(0 0 52px rgba(255, 176, 32, 0.96))
+    drop-shadow(0 0 96px rgba(255, 154, 20, 0.78));
+}
+
+.caption.is-ending.is-lit.is-in::before {
+  animation: sunrise-bloom 3.6s ease-in-out infinite;
 }
 
 .caption.is-ending.is-lit.is-in .primary {
-  animation: ending-glow 3.4s ease-in-out infinite;
+  animation: ending-glow 3.6s ease-in-out infinite;
 }
 
 .secondary {
@@ -465,23 +490,29 @@ button {
   to { opacity: 1; transform: none; }
 }
 
+@keyframes sunrise-bloom {
+  0%,
+  100% { opacity: 0.9; transform: translate(-50%, -46%) scale(0.92); }
+  50% { opacity: 1; transform: translate(-50%, -46%) scale(1.14); }
+}
+
 @keyframes ending-glow {
   0%,
   100% {
     filter:
-      drop-shadow(0 0 1px #ffffff)
-      drop-shadow(0 0 7px rgba(255, 228, 150, 0.95))
-      drop-shadow(0 0 18px #ff3d2a)
-      drop-shadow(0 0 36px #e01010)
-      drop-shadow(0 0 62px rgba(198, 8, 8, 0.94));
+      drop-shadow(0 0 2px #fffef6)
+      drop-shadow(0 0 10px rgba(255, 236, 160, 1))
+      drop-shadow(0 0 24px #ffd24a)
+      drop-shadow(0 0 52px rgba(255, 176, 32, 0.96))
+      drop-shadow(0 0 96px rgba(255, 154, 20, 0.78));
   }
   50% {
     filter:
-      drop-shadow(0 0 3px #ffffff)
-      drop-shadow(0 0 11px rgba(255, 236, 170, 1))
-      drop-shadow(0 0 26px #ff4a30)
-      drop-shadow(0 0 48px #ff1c10)
-      drop-shadow(0 0 84px rgba(255, 28, 16, 0.98));
+      drop-shadow(0 0 4px #ffffff)
+      drop-shadow(0 0 16px rgba(255, 244, 190, 1))
+      drop-shadow(0 0 36px #ffe07a)
+      drop-shadow(0 0 72px rgba(255, 190, 40, 0.98))
+      drop-shadow(0 0 120px rgba(255, 164, 24, 0.9));
   }
 }
 
@@ -495,7 +526,8 @@ button {
   .spark,
   .caption.is-in .primary,
   .caption.is-in .secondary,
-  .caption.is-ending.is-lit.is-in .primary {
+  .caption.is-ending.is-lit.is-in .primary,
+  .caption.is-ending.is-lit.is-in::before {
     animation: none;
   }
 
