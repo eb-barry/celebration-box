@@ -141,10 +141,6 @@ button {
   transition: none;
 }
 
-.flame-anchor.carry .flame-sway {
-  animation: none;
-}
-
 .flame-anchor.out .flame-sway {
   animation: none;
 }
