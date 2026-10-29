@@ -201,9 +201,8 @@ function primeMic() {
 
 function wishCopy() {
   if (phase !== "wish") return;
-  flameHit.hidden = micState !== "off";
-  if (micState === "off") setCaption("許個願，然後輕點燭火", "");
-  else setCaption("許個願，然後吹氣", "");
+  flameHit.hidden = true;
+  setCaption("請許願，再吹蠟燭", "");
 }
 
 function requestMic() {
@@ -374,10 +373,6 @@ startBtn.addEventListener("click", () => {
 });
 
 againBtn.addEventListener("click", relight);
-flameHit.addEventListener("click", (event) => {
-  event.stopPropagation();
-  registerBlow();
-});
 
 audio.addEventListener("loadedmetadata", applySeek);
 audio.addEventListener("playing", applySeek);
