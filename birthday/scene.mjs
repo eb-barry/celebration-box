@@ -10,6 +10,7 @@ const params = new URLSearchParams(location.search);
 const rehearseFrom = Number(params.get("from"));
 const micOff = params.get("mic") === "off";
 const debug = params.get("debug") === "1";
+const DEFAULT_CAKE_NAME = "Joyce";
 let jumpTo = 0;
 
 function applySeek() {
@@ -21,6 +22,7 @@ function applySeek() {
 const stage = document.querySelector(".stage");
 const sheet = document.querySelector("#sheet");
 const photo = document.querySelector("#photo");
+const cakeNameEl = document.querySelector("#cake-name");
 const flame = document.querySelector("#flame");
 const startBtn = document.querySelector("#start");
 const againBtn = document.querySelector("#again");
@@ -143,6 +145,40 @@ function setCaption(main, sub) {
   caption.classList.add("is-in");
 }
 
+function cakeNameFromHash() {
+  let raw = "";
+  try {
+    raw = decodeURIComponent(location.hash.replace(/^#/, ""));
+  } catch {
+    raw = location.hash.replace(/^#/, "");
+  }
+  raw = raw.replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim();
+  const chars = Array.from(raw);
+  if (!chars.length) return DEFAULT_CAKE_NAME;
+  return chars.slice(0, 18).join("");
+}
+
+function showCakeName() {
+  cakeNameEl.textContent = cakeNameFromHash();
+  fitCakeName();
+}
+
+function fitCakeName() {
+  const name = cakeNameEl.textContent;
+  if (!name) return;
+  const scale = parseFloat(getComputedStyle(sheet).getPropertyValue("--s")) || 1;
+  if (scale < 0.05) return;
+  const count = Array.from(name).length;
+  let px = count <= 6 ? 64 : count <= 10 ? 50 : 40;
+  cakeNameEl.style.fontSize = `calc(var(--s) * ${px}px)`;
+  const max = 200 * scale;
+  const width = cakeNameEl.scrollWidth;
+  if (width > max) {
+    px *= max / width;
+    cakeNameEl.style.fontSize = `calc(var(--s) * ${px.toFixed(2)}px)`;
+  }
+}
+
 function placeSheet() {
   const rect = stage.getBoundingClientRect();
   if (rect.width < 2 || rect.height < 2) return;
@@ -150,6 +186,7 @@ function placeSheet() {
   sheet.style.width = `${(IMAGE.w * scale).toFixed(2)}px`;
   sheet.style.height = `${(IMAGE.h * scale).toFixed(2)}px`;
   sheet.style.setProperty("--s", scale.toFixed(4));
+  fitCakeName();
 }
 
 function vibrate(pattern) {
@@ -587,4 +624,7 @@ window.visualViewport?.addEventListener("resize", placeSheet);
 new ResizeObserver(placeSheet).observe(stage);
 placeSheet();
 window.setTimeout(placeSheet, 300);
+showCakeName();
+window.addEventListener("hashchange", showCakeName);
+document.fonts?.ready.then(() => fitCakeName());
 setCaption("點一下，開始唱歌", "請先打開手機聲音");
