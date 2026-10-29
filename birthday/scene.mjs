@@ -3,7 +3,8 @@ import { createBlowMeter } from "./blow-meter.mjs";
 const IMAGE = { w: 768, h: 1376 };
 const SMOKE_MS = 5000;
 const BOW_MS = 1000;
-const CARRY_MS = 3000;
+const RISE_MS = 1000;
+const FALL_MS = 3000;
 
 const params = new URLSearchParams(location.search);
 const rehearseFrom = Number(params.get("from"));
@@ -411,38 +412,59 @@ function finish() {
   vibrate([18, 40, 28, 40, 80]);
   againBtn.hidden = true;
   setCaption("願友誼讓每一刻都發亮", "");
-  flame.classList.add("smoking");
-  smokeTimer = window.setTimeout(() => flame.classList.remove("smoking"), SMOKE_MS);
   carryFlame(body);
 }
 
-// The flame drifts down from the wick to the closing line. Three seconds, then it is gone.
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : 1 - ((-2 * t + 2) ** 2) / 2;
+}
+
+// The whole flame lifts for one second, then a slow parabola carries it
+// down onto the closing line. Four seconds, then it is gone.
 function carryFlame(body) {
   if (!body) {
     igniteEnding();
     return;
   }
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const duration = reduce ? 0 : CARRY_MS;
+  const riseMs = reduce ? 0 : RISE_MS;
+  const fallMs = reduce ? 0 : FALL_MS;
   liftFlame();
   const height = body.getBoundingClientRect().height;
   flame.classList.add("carry");
   const started = performance.now();
 
-  function point(t) {
+  function point(elapsed) {
     const wick = flame.getBoundingClientRect();
     const text = primary.getBoundingClientRect();
     const dx = text.left + text.width / 2 - wick.left;
     const dy = text.top + text.height / 2 - wick.top + height * 0.5;
-    return { x: dx * t, y: dy * t };
+    const startCenter = wick.top - height * 0.5;
+    const rise = Math.max(56, Math.min(height * 1.15, startCenter - window.innerHeight * 0.27));
+    if (elapsed <= riseMs) {
+      const u = riseMs === 0 ? 1 : easeInOut(elapsed / riseMs);
+      return { x: 0, y: -rise * u, grow: 1 + 0.4 * u };
+    }
+    const u = fallMs === 0 ? 1 : easeInOut(Math.min(1, (elapsed - riseMs) / fallMs));
+    const bow = Math.min(96, window.innerWidth * 0.22);
+    const p1x = dx * 0.35 + bow;
+    const p1y = -rise + (dy + rise) * 0.38;
+    const a = (1 - u) * (1 - u);
+    const b = 2 * (1 - u) * u;
+    const c = u * u;
+    return {
+      x: b * p1x + c * dx,
+      y: a * -rise + b * p1y + c * dy,
+      grow: 1.4,
+    };
   }
 
   function frame(now) {
     if (phase !== "out") return;
-    const t = duration === 0 ? 1 : Math.min(1, (now - started) / duration);
-    const spot = point(t);
-    body.style.transform = `translate(${spot.x.toFixed(2)}px, ${spot.y.toFixed(2)}px) translateX(-50%) scale(var(--flame-scale))`;
-    if (t < 1) {
+    const elapsed = now - started;
+    const spot = point(elapsed);
+    body.style.transform = `translate(${spot.x.toFixed(2)}px, ${spot.y.toFixed(2)}px) translateX(-50%) scale(calc(var(--flame-scale) * ${spot.grow.toFixed(3)}))`;
+    if (elapsed < riseMs + fallMs) {
       carryRaf = requestAnimationFrame(frame);
       return;
     }
@@ -460,6 +482,8 @@ function igniteEnding() {
   const body = flame.querySelector(".flame-body");
   if (body) body.style.transform = "";
   restoreFlame();
+  flame.classList.add("smoking");
+  smokeTimer = window.setTimeout(() => flame.classList.remove("smoking"), SMOKE_MS);
   document.querySelector(".caption").classList.add("is-lit");
   againBtn.hidden = false;
 }
