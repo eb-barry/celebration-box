@@ -3,7 +3,7 @@ import { createBlowMeter } from "./blow-meter.mjs";
 const IMAGE = { w: 768, h: 1376 };
 const SMOKE_MS = 5000;
 const BOW_MS = 1000;
-const SNUFF_MS = 340;
+const CARRY_MS = 3000;
 
 const params = new URLSearchParams(location.search);
 const rehearseFrom = Number(params.get("from"));
@@ -120,6 +120,8 @@ let closeTimer = 0;
 let smokeTimer = 0;
 let coldTimer = 0;
 let bowTimer = 0;
+let carryRaf = 0;
+let flameHome = null;
 
 const timeBuf = new Uint8Array(2048);
 const freqBuf = new Uint8Array(1024);
@@ -132,6 +134,7 @@ function setCaption(main, sub) {
   secondary.textContent = sub;
   secondary.hidden = !sub;
   const caption = document.querySelector(".caption");
+  caption.classList.remove("is-lit");
   caption.classList.toggle("is-ending", main === "願友誼讓每一刻都發亮");
   caption.hidden = !main && !sub;
   caption.classList.remove("is-in");
@@ -351,7 +354,34 @@ function stopSmoke() {
   window.clearTimeout(smokeTimer);
   window.clearTimeout(coldTimer);
   window.clearTimeout(bowTimer);
-  flame.classList.remove("smoking", "cold", "bow");
+  if (carryRaf) cancelAnimationFrame(carryRaf);
+  carryRaf = 0;
+  flame.classList.remove("smoking", "cold", "bow", "carry");
+  const body = flame.querySelector(".flame-body");
+  if (body) body.style.transform = "";
+  restoreFlame();
+}
+
+function liftFlame() {
+  const rect = flame.getBoundingClientRect();
+  const host = stage.getBoundingClientRect();
+  const scale = getComputedStyle(sheet).getPropertyValue("--s").trim();
+  if (scale) flame.style.setProperty("--s", scale);
+  if (flame.parentElement !== stage) {
+    flameHome = { parent: flame.parentElement, next: flame.nextSibling };
+    stage.appendChild(flame);
+  }
+  flame.style.left = `${rect.left - host.left}px`;
+  flame.style.top = `${rect.top - host.top}px`;
+}
+
+function restoreFlame() {
+  flame.style.left = "";
+  flame.style.top = "";
+  flame.style.removeProperty("--s");
+  if (!flameHome) return;
+  flameHome.parent.insertBefore(flame, flameHome.next);
+  flameHome = null;
 }
 
 function bowFlame() {
@@ -369,24 +399,104 @@ function finish() {
   stopMic();
   flameHit.hidden = true;
   window.clearTimeout(bowTimer);
-  flame.classList.remove("bow");
-  flame.classList.add("out");
-  stage.classList.add("is-out");
-  vibrate([18, 40, 28, 40, 80]);
-  setCaption("", "");
   window.clearTimeout(closeTimer);
   window.clearTimeout(coldTimer);
   window.clearTimeout(smokeTimer);
-  coldTimer = window.setTimeout(() => {
+  if (carryRaf) cancelAnimationFrame(carryRaf);
+  carryRaf = 0;
+  flame.classList.remove("bow", "out", "cold");
+  const body = flame.querySelector(".flame-body");
+  if (body) body.style.transform = "";
+  stage.classList.add("is-out");
+  vibrate([18, 40, 28, 40, 80]);
+  againBtn.hidden = true;
+  setCaption("願友誼讓每一刻都發亮", "");
+  flame.classList.add("smoking");
+  smokeTimer = window.setTimeout(() => flame.classList.remove("smoking"), SMOKE_MS);
+  carryFlame(body);
+}
+
+// How high the control point must sit so the parabola's crest reaches `crest`
+// (a negative offset: up the picture, toward the dark wall).
+function backwardLift(dy, crest) {
+  const drop = Math.max(dy, 1);
+  let lo = 40;
+  let hi = Math.max(1800, drop * 6);
+  for (let n = 0; n < 18; n += 1) {
+    const mid = (lo + hi) / 2;
+    const u = mid / (2 * mid + drop);
+    const y = 2 * (1 - u) * u * -mid + u * u * drop;
+    if (y > crest) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+// The flame leaves the wick and arcs backward, toward the dark wall,
+// then down onto the closing line. Three seconds, then it is gone.
+function carryFlame(body) {
+  if (!body) {
+    igniteEnding();
+    return;
+  }
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const duration = reduce ? 0 : CARRY_MS;
+  liftFlame();
+  const height = body.getBoundingClientRect().height;
+  flame.classList.add("carry");
+  const started = performance.now();
+
+  function point(t) {
+    const wick = flame.getBoundingClientRect();
+    const text = primary.getBoundingClientRect();
+    const dx = text.left + text.width / 2 - wick.left;
+    const dy = text.top + text.height / 2 - wick.top + height * 0.5;
+    const u = t < 0.5 ? 2 * t * t : 1 - ((-2 * t + 2) ** 2) / 2;
+    const center0 = wick.top - height * 0.5;
+    const crestScreen = window.innerHeight * 0.22;
+    const crest = Math.min(-90, crestScreen - center0);
+    const lift = backwardLift(dy, crest);
+    // The lamp hangs on the center line, so the crest steps onto the dark
+    // wall beside it. The landing is still the middle of the line.
+    const aside = Math.max(140, window.innerWidth * 0.36);
+    const p1x = dx * 0.2 - aside;
+    const p1y = -lift;
+    const b = 2 * (1 - u) * u;
+    const c = u * u;
+    const bow = Math.sin(Math.PI * u);
+    return {
+      x: b * p1x + c * dx,
+      y: b * p1y + c * dy,
+      lean: bow * 16,
+      squat: 1 - bow * 0.1,
+    };
+  }
+
+  function frame(now) {
     if (phase !== "out") return;
-    flame.classList.remove("bow");
-    flame.classList.add("cold", "smoking");
-  }, SNUFF_MS);
-  smokeTimer = window.setTimeout(() => flame.classList.remove("smoking"), SNUFF_MS + SMOKE_MS);
-  closeTimer = window.setTimeout(() => {
-    setCaption("願友誼讓每一刻都發亮", "");
-    againBtn.hidden = false;
-  }, 2200);
+    const t = duration === 0 ? 1 : Math.min(1, (now - started) / duration);
+    const spot = point(t);
+    body.style.transform = `translate(${spot.x.toFixed(2)}px, ${spot.y.toFixed(2)}px) translateX(-50%) rotateX(${spot.lean.toFixed(2)}deg) scale(var(--flame-scale), calc(var(--flame-scale) * ${spot.squat.toFixed(3)}))`;
+    if (t < 1) {
+      carryRaf = requestAnimationFrame(frame);
+      return;
+    }
+    carryRaf = 0;
+    igniteEnding();
+  }
+
+  carryRaf = requestAnimationFrame(frame);
+}
+
+function igniteEnding() {
+  if (phase !== "out") return;
+  flame.classList.remove("carry");
+  flame.classList.add("cold");
+  const body = flame.querySelector(".flame-body");
+  if (body) body.style.transform = "";
+  restoreFlame();
+  document.querySelector(".caption").classList.add("is-lit");
+  againBtn.hidden = false;
 }
 
 function registerBlow() {

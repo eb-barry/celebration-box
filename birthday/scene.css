@@ -132,6 +132,19 @@ button {
   filter: drop-shadow(0 0 5px rgba(255, 170, 60, 0.4));
 }
 
+.flame-anchor.carry {
+  z-index: 8;
+  perspective: none;
+}
+
+.flame-anchor.carry .flame-body {
+  transition: none;
+}
+
+.flame-anchor.carry .flame-sway {
+  animation: none;
+}
+
 .flame-anchor.out .flame-sway {
   animation: none;
 }
@@ -285,13 +298,33 @@ button {
 }
 
 .caption.is-ending {
-  background: linear-gradient(to top, rgba(42, 6, 4, 0.42) 0%, rgba(28, 4, 3, 0.16) 48%, transparent 100%);
+  background: linear-gradient(to top, rgba(12, 8, 6, 0.62) 0%, rgba(12, 8, 6, 0.24) 48%, transparent 100%);
+  padding-bottom: calc(4.6rem + env(safe-area-inset-bottom));
+}
+
+.caption.is-ending .again {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(0.55rem + env(safe-area-inset-bottom));
+  margin-top: 0;
 }
 
 .caption.is-ending .primary {
   font-size: clamp(2.025rem, 6.9vw, 3rem);
   line-height: 1.45;
   letter-spacing: 0.04em;
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  background: none;
+  filter: none;
+}
+
+.caption.is-ending.is-lit {
+  background: linear-gradient(to top, rgba(42, 6, 4, 0.42) 0%, rgba(28, 4, 3, 0.16) 48%, transparent 100%);
+}
+
+.caption.is-ending.is-lit .primary {
   background: linear-gradient(180deg, #ffffff 0%, #fffdf6 30%, #ffe07a 52%, #fff3bc 76%, #ffffff 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -305,8 +338,8 @@ button {
     drop-shadow(0 0 62px rgba(198, 8, 8, 0.94));
 }
 
-.caption.is-ending.is-in .primary {
-  animation: rise-in 0.7s ease both, ending-glow 3.4s ease-in-out 0.7s infinite;
+.caption.is-ending.is-lit.is-in .primary {
+  animation: ending-glow 3.4s ease-in-out infinite;
 }
 
 .secondary {
@@ -466,7 +499,7 @@ button {
   .spark,
   .caption.is-in .primary,
   .caption.is-in .secondary,
-  .caption.is-ending.is-in .primary {
+  .caption.is-ending.is-lit.is-in .primary {
     animation: none;
   }
 
