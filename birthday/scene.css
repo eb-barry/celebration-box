@@ -316,47 +316,14 @@ button {
   filter: none;
 }
 
-.caption.is-ending.is-lit {
-  background: transparent;
-}
-
-.caption.is-ending.is-lit::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  top: 28%;
-  width: 150vw;
-  height: 82vh;
-  transform: translate(-50%, -46%);
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 252, 236, 0.98) 0%,
-    rgba(255, 228, 130, 0.92) 7%,
-    rgba(255, 196, 48, 0.74) 16%,
-    rgba(255, 170, 24, 0.46) 32%,
-    rgba(255, 154, 18, 0.2) 50%,
-    transparent 70%
-  );
-}
-
 .caption.is-ending.is-lit .primary {
-  background: linear-gradient(180deg, #fffef8 0%, #fff6c8 20%, #ffd24a 48%, #ffc226 68%, #fff1b0 86%, #fffef6 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: #fff8dc;
-  -webkit-text-fill-color: transparent;
+  color: #fff8e4;
+  -webkit-text-fill-color: #fff8e4;
+  background: none;
   filter:
-    drop-shadow(0 0 2px #fffef6)
-    drop-shadow(0 0 10px rgba(255, 236, 160, 1))
-    drop-shadow(0 0 24px #ffd24a)
-    drop-shadow(0 0 52px rgba(255, 176, 32, 0.96))
-    drop-shadow(0 0 96px rgba(255, 154, 20, 0.78));
-}
-
-.caption.is-ending.is-lit.is-in::before {
-  animation: sunrise-bloom 3.6s ease-in-out infinite;
+    drop-shadow(0 0 0.05em rgba(255, 252, 240, 0.95))
+    drop-shadow(0 0 0.14em rgba(255, 210, 80, 0.85))
+    drop-shadow(0 0 0.28em rgba(255, 176, 36, 0.45));
 }
 
 .caption.is-ending.is-lit.is-in .primary {
@@ -490,29 +457,19 @@ button {
   to { opacity: 1; transform: none; }
 }
 
-@keyframes sunrise-bloom {
-  0%,
-  100% { opacity: 0.9; transform: translate(-50%, -46%) scale(0.92); }
-  50% { opacity: 1; transform: translate(-50%, -46%) scale(1.14); }
-}
-
 @keyframes ending-glow {
   0%,
   100% {
     filter:
-      drop-shadow(0 0 2px #fffef6)
-      drop-shadow(0 0 10px rgba(255, 236, 160, 1))
-      drop-shadow(0 0 24px #ffd24a)
-      drop-shadow(0 0 52px rgba(255, 176, 32, 0.96))
-      drop-shadow(0 0 96px rgba(255, 154, 20, 0.78));
+      drop-shadow(0 0 0.05em rgba(255, 252, 240, 0.9))
+      drop-shadow(0 0 0.12em rgba(255, 210, 80, 0.8))
+      drop-shadow(0 0 0.24em rgba(255, 176, 36, 0.4));
   }
   50% {
     filter:
-      drop-shadow(0 0 4px #ffffff)
-      drop-shadow(0 0 16px rgba(255, 244, 190, 1))
-      drop-shadow(0 0 36px #ffe07a)
-      drop-shadow(0 0 72px rgba(255, 190, 40, 0.98))
-      drop-shadow(0 0 120px rgba(255, 164, 24, 0.9));
+      drop-shadow(0 0 0.07em #fffef8)
+      drop-shadow(0 0 0.16em rgba(255, 220, 100, 0.92))
+      drop-shadow(0 0 0.32em rgba(255, 184, 42, 0.5));
   }
 }
 
@@ -526,8 +483,7 @@ button {
   .spark,
   .caption.is-in .primary,
   .caption.is-in .secondary,
-  .caption.is-ending.is-lit.is-in .primary,
-  .caption.is-ending.is-lit.is-in::before {
+  .caption.is-ending.is-lit.is-in .primary {
     animation: none;
   }
 
