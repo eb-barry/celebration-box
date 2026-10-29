@@ -284,6 +284,31 @@ button {
   min-height: 1.35em;
 }
 
+.caption.is-ending {
+  background: linear-gradient(to top, rgba(42, 6, 4, 0.42) 0%, rgba(28, 4, 3, 0.16) 48%, transparent 100%);
+}
+
+.caption.is-ending .primary {
+  font-size: clamp(2.025rem, 6.9vw, 3rem);
+  line-height: 1.45;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, #ffffff 0%, #fffdf6 30%, #ffe07a 52%, #fff3bc 76%, #ffffff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: #fffef8;
+  -webkit-text-fill-color: transparent;
+  filter:
+    drop-shadow(0 0 1px #ffffff)
+    drop-shadow(0 0 7px rgba(255, 228, 150, 0.95))
+    drop-shadow(0 0 18px #ff3d2a)
+    drop-shadow(0 0 36px #e01010)
+    drop-shadow(0 0 62px rgba(198, 8, 8, 0.94));
+}
+
+.caption.is-ending.is-in .primary {
+  animation: rise-in 0.7s ease both, ending-glow 3.4s ease-in-out 0.7s infinite;
+}
+
 .secondary {
   margin-top: 0.35rem;
   font-size: clamp(1.05rem, 3.6vw, 1.45rem);
@@ -411,6 +436,26 @@ button {
   to { opacity: 1; transform: none; }
 }
 
+@keyframes ending-glow {
+  0%,
+  100% {
+    filter:
+      drop-shadow(0 0 1px #ffffff)
+      drop-shadow(0 0 7px rgba(255, 228, 150, 0.95))
+      drop-shadow(0 0 18px #ff3d2a)
+      drop-shadow(0 0 36px #e01010)
+      drop-shadow(0 0 62px rgba(198, 8, 8, 0.94));
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 3px #ffffff)
+      drop-shadow(0 0 11px rgba(255, 236, 170, 1))
+      drop-shadow(0 0 26px #ff4a30)
+      drop-shadow(0 0 48px #ff1c10)
+      drop-shadow(0 0 84px rgba(255, 28, 16, 0.98));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .flame-sway {
     animation: drift-soft 2.4s ease-in-out infinite;
@@ -420,7 +465,8 @@ button {
   .mid,
   .spark,
   .caption.is-in .primary,
-  .caption.is-in .secondary {
+  .caption.is-in .secondary,
+  .caption.is-ending.is-in .primary {
     animation: none;
   }
 

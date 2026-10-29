@@ -132,6 +132,7 @@ function setCaption(main, sub) {
   secondary.textContent = sub;
   secondary.hidden = !sub;
   const caption = document.querySelector(".caption");
+  caption.classList.toggle("is-ending", main === "願友誼讓每一刻都發亮");
   caption.hidden = !main && !sub;
   caption.classList.remove("is-in");
   void caption.offsetWidth;
