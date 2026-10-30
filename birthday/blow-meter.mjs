@@ -1,73 +1,64 @@
-// A blow is a sudden, loud, low rush of air. One continuous breath counts once.
-// Phone puffs are short, so a hard onset counts immediately and a softer one
-// only has to stay loud for a moment. The next breath has to ease off first.
+// A blow is a sudden jump in loudness. One continuous breath counts once.
+// Phones strip the low rumble out of a puff, so bass is not required.
+// The next breath has to ease off first.
 
 export function createBlowMeter() {
   const history = [];
-  let ambientRms = 0.02;
-  let ambientLow = 0.05;
+  let ambient = 0.012;
   let armed = false;
   let armedAt = 0;
   let overSince = 0;
   let lastTrigger = -1e9;
   let cooling = false;
 
-  function push({ rms, low, now }) {
+  function push({ rms, now }) {
     history.push({ rms, now });
-    const keep = now - 1500;
+    const keep = now - 1200;
     while (history.length && history[0].now < keep) history.shift();
 
     if (!armed) {
-      ambientRms = ambientRms * 0.9 + rms * 0.1;
-      ambientLow = ambientLow * 0.9 + low * 0.1;
+      ambient = ambient * 0.9 + rms * 0.1;
       return null;
     }
 
-    if (now - armedAt < 300) {
-      ambientRms = ambientRms * 0.8 + rms * 0.2;
-      ambientLow = ambientLow * 0.8 + low * 0.2;
+    if (now - armedAt < 100) {
+      ambient = ambient * 0.85 + rms * 0.15;
       return null;
     }
 
-    if (rms < ambientRms * 1.7) {
-      ambientRms = ambientRms * 0.95 + rms * 0.05;
-      ambientLow = ambientLow * 0.95 + low * 0.05;
-    }
+    if (rms < ambient * 1.8) ambient = ambient * 0.9 + rms * 0.1;
 
     if (cooling) {
-      if (rms < Math.max(0.035, ambientRms * 1.6)) cooling = false;
+      if (rms < Math.max(0.02, ambient * 1.45)) cooling = false;
       else return null;
     }
 
     let ref = history[0];
     for (const item of history) {
-      if (now - item.now >= 200) ref = item;
+      if (now - item.now >= 160) ref = item;
       else break;
     }
 
-    const attack = rms / Math.max(ref.rms, 0.004);
-    const loud = rms > Math.max(0.04, ambientRms * 2.6);
-    const bassy = low > Math.max(0.06, ambientLow * 1.9);
-    const sudden = attack > 1.65;
-    const gap = now - lastTrigger >= 350;
-    const hard = rms > Math.max(0.11, ambientRms * 4);
+    const attack = rms / Math.max(ref.rms, 0.003);
+    const loud = rms > Math.max(0.02, ambient * 2.2);
+    const sudden = attack > 1.7 && rms - ref.rms > 0.025;
+    const gap = now - lastTrigger >= 320;
+    if (!gap) return null;
 
-    if (loud && bassy && sudden && hard && gap) {
+    if (loud && sudden && rms > Math.max(0.06, ambient * 3)) {
       lastTrigger = now;
       overSince = 0;
       cooling = true;
       return { at: now };
     }
 
-    // A softer puff may lose its attack once the window fills with the puff
-    // itself. Keep the onset and count it if the air stays for a short beat.
-    if (!(loud && bassy && (sudden || overSince))) {
+    if (!(loud && (sudden || overSince))) {
       overSince = 0;
       return null;
     }
 
     if (!overSince) overSince = now;
-    if (now - overSince < 80 || !gap) return null;
+    if (now - overSince < 70) return null;
 
     lastTrigger = now;
     overSince = 0;
@@ -89,7 +80,7 @@ export function createBlowMeter() {
       overSince = 0;
     },
     snapshot() {
-      return { ambientRms, ambientLow, cooling, armed };
+      return { ambientRms: ambient, ambientLow: 0, cooling, armed };
     },
   };
 }

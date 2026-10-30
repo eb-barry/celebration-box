@@ -78,6 +78,17 @@ test("a short phone puff counts once", () => {
   assert.ok(second);
 });
 
+test("a bright puff with the bass stripped out still counts", () => {
+  const meter = createBlowMeter();
+  meter.arm(0);
+  quiet(meter, 0, 400);
+  let hits = 0;
+  for (let now = 500; now <= 700; now += 40) {
+    if (meter.push({ rms: 0.16, low: 0.01, now })) hits += 1;
+  }
+  assert.equal(hits, 1);
+});
+
 test("a slow rise, like talking, does not count", () => {
   const meter = createBlowMeter();
   meter.arm(0);
